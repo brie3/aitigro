@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>GitHub Repository Searcher</title>
+    </head>
+    <body>
+        <div id="search"></div>
+        <div id="controls">
+            <input type="text" id="message" />
+            <button id="send">SEND</button>
+        </div>
+
+        <script>
+            let comps = {
+                dialog: document.querySelector("#search"),
+                message: document.querySelector("#controls #message"),
+                send: document.querySelector("#controls #send")
+            };
+
+            let ws = new WebSocket("ws://localhost:8888/socket");
+            ws.onclose = () => console.log("closed");
+
+            comps.send.onclick = () => {
+                let msg = {
+                    type: "message",
+                    data: comps.message.value
+                };
+                ws.send(JSON.stringify(msg));
+                comps.message.value = "";
+            };
+
+            ws.onopen = () => {
+                console.log("connected");
+            };
+
+            ws.onmessage = e => {
+                let msg = JSON.parse(e.data);
+                if (msg.type === "ping") {
+                    ws.send(JSON.stringify({ type: "pong" }));
+                    return;
+                }
+
+                if (msg.type === "message") {
+                    let msgComp = document.createElement("div");
+                    msgComp.innerText = JSON.stringify(msg.data,null,4);
+                    comps.dialog.appendChild(msgComp);
+                }
+            };
+        </script>
+    </body>
+</html>
