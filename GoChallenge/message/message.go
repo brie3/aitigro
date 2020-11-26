@@ -6,7 +6,9 @@ type Type string
 const (
 	MTPing    Type = "ping"
 	MTPong    Type = "pong"
+	MTError   Type = "error"
 	MTMessage Type = "message"
+	MTInfo    Type = "info"
 )
 
 type Message struct {

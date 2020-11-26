@@ -2,25 +2,31 @@ package app
 
 import (
 	"GoChallenge/message"
-	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 )
 
-var budyMessage = message.Message{
-	Type: message.MTMessage,
-	Data: "Идёт поиск",
-}
+const (
+	pingPeriod = time.Second * 10
+)
 
-var startMessage = message.Message{
-	Type: message.MTMessage,
-	Data: "Начинаю поиск",
-}
+var (
+	busyMessage = message.Message{
+		Type: message.MTInfo,
+		Data: "Идёт поиск",
+	}
+	startMessage = message.Message{
+		Type: message.MTInfo,
+		Data: "Начинаю поиск",
+	}
+	pingMessage = message.Message{
+		Type: message.MTPing,
+	}
+)
 
 type Server struct {
 	router   *chi.Mux
@@ -50,70 +56,76 @@ func (s *Server) setUpHandlers() {
 
 func (s *Server) socketHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := s.upgrader.Upgrade(w, r, nil)
-
 	if err != nil {
-		log.Println(err)
+		log.Printf(upgradeErrFormat, err)
 		return
 	}
-	defer ws.Close()
 
-	var block bool
+	pingTicker := time.NewTicker(pingPeriod)
+
+	defer func() {
+		pingTicker.Stop()
+		ws.Close()
+	}()
+
+	var (
+		block bool
+		out   chan *RepoResult
+		done  = make(chan struct{})
+	)
+
+	delay := func() {
+		close(done)
+	}
 
 	for {
-		msg := message.Message{}
-		if err := ws.ReadJSON(&msg); err != nil {
-			log.Println(err)
+		var read message.Message
+		if err = ws.ReadJSON(&read); err != nil {
+			log.Printf(readMessageErrFormat, err)
+			return
 		}
-		if msg.Type == message.MTPong {
+		if read.Type == message.MTPong {
 			continue
 		}
-		if msg.Type == message.MTMessage {
-			if !block {
-				if err := ws.WriteJSON(startMessage); err != nil {
-					log.Println(err)
+		if !block {
+			if err := ws.WriteJSON(&startMessage); err != nil {
+				log.Printf(writeMessageErrFormat, err)
+				return
+			}
+			go func() {
+				if s, ok := read.Data.(string); ok {
+					out = worker(s)
 				}
-				block = true
-				time.AfterFunc(timeout, func() {
-					out := <-httpWorker(msg.Data.(string))
-					if err := ws.WriteJSON(message.Message{
-						Type: message.MTMessage,
-						Data: out,
-					}); err != nil {
-						log.Println(err)
+			}()
+			time.AfterFunc(timeout, delay)
+			block = true
+		} else if err = ws.WriteJSON(busyMessage); err != nil {
+			log.Printf(writeMessageErrFormat, err)
+			return
+		}
+		select {
+		case <-pingTicker.C:
+			if err = ws.WriteJSON(pingMessage); err != nil {
+				log.Printf(writeMessageErrFormat, err)
+				return
+			}
+		case <-done:
+			select {
+			case v := <-out:
+				block = false
+				done = make(chan struct{})
+				if v.Error != nil {
+					if err = ws.WriteJSON(message.Message{Type: message.MTError, Data: v.Error}); err != nil {
+						log.Printf(writeMessageErrFormat, err)
+						return
 					}
-					block = false
-				})
-			} else {
-				if err := ws.WriteJSON(budyMessage); err != nil {
-					log.Println(err)
+				} else {
+					if err = ws.WriteJSON(message.Message{Type: message.MTMessage, Data: v}); err != nil {
+						log.Printf(writeMessageErrFormat, err)
+						return
+					}
 				}
 			}
 		}
 	}
-}
-
-func httpWorker(in string) chan *RepoResult {
-	var (
-		err    error
-		resp   *http.Response
-		result *RepoResult
-	)
-	out := make(chan *RepoResult)
-	go func() {
-		resp, err = http.Get(searchQuery + url.QueryEscape(golang+in))
-		if err != nil {
-			log.Printf("request error: %v", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			log.Printf("search query failed: %s", resp.Status)
-		}
-
-		if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			log.Printf("can't decode: %v", err)
-		}
-		out <- result
-	}()
-	return out
 }
