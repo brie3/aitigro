@@ -11,26 +11,26 @@
         <div id="controls" class="ui form">
             <label>GitHub Repository Search</label>
             <input type="text" id="message" />
-            <button id="send">SEND</button>
         </div>
 
         <script>
             let comps = {
                 dialog: document.querySelector("#search"),
                 message: document.querySelector("#controls #message"),
-                send: document.querySelector("#controls #send")
             };
 
             let ws = new WebSocket("ws://localhost:8888/socket");
             ws.onclose = () => console.log("closed");
 
-            comps.send.onclick = () => {
-                let msg = {
-                    type: "message",
-                    data: comps.message.value
-                };
-                ws.send(JSON.stringify(msg));
-                comps.message.value = "";
+            comps.message.onkeydown = (e) => {
+                if (e.keyCode == 13){
+                    let msg = {
+                        type: "message",
+                        data: comps.message.value
+                    };
+                    ws.send(JSON.stringify(msg));
+                    comps.message.value = "";
+                }
             };
 
             ws.onopen = () => {
@@ -58,7 +58,7 @@
 
                 if (msg.type === "message") {
                     let msgComp = document.createElement("div");
-                    let s = ""
+                    let s = "Всего найдено: "+msg.data.total_count
                     msg.data.items.forEach(element => {
                         s+='<div class="repo"><a class="repo-title" href="'+element.html_url+'">'+element.name+'</a>'+'<p class="repo-description">'+element.description+'</p><p class="repo-date">'+element.created_at+'</p></div>'
                     });
