@@ -15,7 +15,8 @@ const (
 	delay      = time.Second * 10
 
 	internalErrorFormat   = "internal error"
-	busyString            = "Идёт поиск\n"
+	busyString            = "Идёт поиск"
+	searchStartMessage    = "Начинаю поиск"
 	searchQuery           = "https://api.github.com/search/repositories?q="
 	filter                = "golang "
 	osStdoutErrFormat     = "can't write string into os.stdout: %v"
@@ -55,11 +56,11 @@ type Repo struct {
 var (
 	busyMessage = Message{
 		Type: MTInfo,
-		Data: "Идёт поиск",
+		Data: busyString,
 	}
 	startMessage = Message{
 		Type: MTInfo,
-		Data: "Начинаю поиск",
+		Data: searchStartMessage,
 	}
 	pingMessage = Message{
 		Type: MTPing,

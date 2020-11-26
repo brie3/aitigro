@@ -47,14 +47,16 @@ func (s *Server) socketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeWs(ws *websocket.Conn, in <-chan *Message) {
+	cancel := make(chan struct{})
+	defer close(cancel)
+
 	var err error
 	for i := range in {
-		out := make(chan *RepoResult)
-		if s, ok := i.Data.(string); ok {
-			go crawl(s, out)
-		} else {
+		s, ok := i.Data.(string)
+		if !ok {
 			continue
 		}
+		out := crawl(s, cancel)
 		time.Sleep(delay)
 		for j := range out {
 			if j.Error == nil {
@@ -66,7 +68,6 @@ func writeWs(ws *websocket.Conn, in <-chan *Message) {
 				log.Printf(osStdoutErrFormat, err)
 				return
 			}
-			close(out)
 		}
 	}
 }
