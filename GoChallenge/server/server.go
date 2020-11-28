@@ -23,7 +23,7 @@ func (s *Server) Start() {
 	s.setUpHandlers()
 
 	go func() {
-		if err := http.ListenAndServe(":8888", s.router); err != nil {
+		if err := http.ListenAndServe(":__PORT__", s.router); err != nil {
 			log.Println("Failed to start server: ", err)
 		}
 	}()

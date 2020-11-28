@@ -19,7 +19,7 @@
                 message: document.querySelector("#controls #message"),
             };
 
-            let ws = new WebSocket("ws://localhost:8888/socket");
+            let ws = new WebSocket("ws://localhost:__PORT__/socket");
             ws.onclose = () => console.log("closed");
 
             comps.message.onkeydown = (e) => {
