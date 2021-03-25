@@ -5,11 +5,16 @@ import (
 )
 
 const (
-	MTPing    Type = "ping"
-	MTPong    Type = "pong"
-	MTError   Type = "error"
+	// MTPing represent ping type message.
+	MTPing Type = "ping"
+	// MTPong represent pong type message.
+	MTPong Type = "pong"
+	// MTError represent error type message.
+	MTError Type = "error"
+	// MTMessage represent error type message.
 	MTMessage Type = "message"
-	MTInfo    Type = "info"
+	// MTInfo represent info type message.
+	MTInfo Type = "info"
 
 	pingPeriod = time.Second * 10
 	delay      = time.Second * 10
@@ -24,9 +29,9 @@ const (
 	readMessageErrFormat  = "can't read message from socket: %v"
 	userReadErrFormat     = "can't read message from user: %v"
 	upgradeErrFormat      = "can't upgrade connection: %v"
-	requestQueryErrFormat = "request error: %v"
-	responseErrFormat     = "search query failed: %s"
 	decodeErrFormat       = "can't decode: %v"
+	badStatusCode         = "err bad status code: %d for query: %s"
+	badMessageFormat      = "bad query"
 )
 
 // Type represent websocket message type.
@@ -68,5 +73,9 @@ var (
 	errorMessage = Message{
 		Type: MTError,
 		Data: internalErrorFormat,
+	}
+	badMessage = Message{
+		Type: MTError,
+		Data: badMessageFormat,
 	}
 )

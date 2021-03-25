@@ -14,13 +14,18 @@ func (s *Server) socketHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf(upgradeErrFormat, err)
 		return
 	}
-	defer ws.Close()
 
-	out := make(chan *Message)
-	defer close(out)
+	in := make(chan string)
+	cancel := make(chan struct{})
+
+	defer func() {
+		ws.Close()
+		close(cancel)
+		close(in)
+	}()
 
 	go ticker(ws)
-	go writeWs(ws, out)
+	go writeWS(ws, crawl(in, cancel))
 
 	for {
 		var read Message
@@ -31,8 +36,19 @@ func (s *Server) socketHandler(w http.ResponseWriter, r *http.Request) {
 		if read.Type == MTPong {
 			continue
 		}
+
+		query, ok := read.Data.(string)
+		switch ok {
+		case true:
+		default:
+			if err := ws.WriteJSON(&badMessage); err != nil {
+				log.Printf(writeMessageErrFormat, err)
+				return
+			}
+		}
+
 		select {
-		case out <- &read:
+		case in <- query:
 			if err := ws.WriteJSON(&startMessage); err != nil {
 				log.Printf(writeMessageErrFormat, err)
 				return
@@ -46,26 +62,18 @@ func (s *Server) socketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writeWs(ws *websocket.Conn, in <-chan *Message) {
-	cancel := make(chan struct{})
-	defer close(cancel)
-
-	var err error
-	for i := range in {
-		s, ok := i.Data.(string)
-		if !ok {
-			continue
-		}
-		out := crawl(s, cancel)
-		time.Sleep(delay)
-		for j := range out {
-			if j.Error == nil {
-				if err = ws.WriteJSON(Message{Type: MTMessage, Data: j}); err != nil {
-					log.Printf(osStdoutErrFormat, err)
-					return
-				}
-			} else if err = ws.WriteJSON(errorMessage); err != nil {
-				log.Printf(osStdoutErrFormat, err)
+func writeWS(ws *websocket.Conn, from <-chan *RepoResult) {
+	for res := range from {
+		switch res.Error {
+		case nil:
+			if err := ws.WriteJSON(Message{Type: MTMessage, Data: res}); err != nil {
+				log.Printf(writeMessageErrFormat, err)
+				return
+			}
+		default:
+			log.Println(res.Error.Error())
+			if err := ws.WriteJSON(errorMessage); err != nil {
+				log.Printf(writeMessageErrFormat, err)
 				return
 			}
 		}

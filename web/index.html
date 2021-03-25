@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Repository Searcher</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css"
+    />
+  </head>
+  <body class="ui container">
+    <div id="controls" class="ui form">
+      <label>GitHub Repository Search</label>
+      <input type="text" id="message" />
+    </div>
+    <div id="search" class="search-bar ui segment"></div>
+
+    <script>
+      let comps = {
+        dialog: document.querySelector("#search"),
+        message: document.querySelector("#controls #message"),
+        isDone: false,
+      };
+
+      let ws = new WebSocket("ws://localhost:__PORT__/socket");
+      ws.onclose = () => console.log("closed");
+
+      comps.message.onkeydown = (e) => {
+        if (e.keyCode == 13) {
+          let msg = {
+            type: "message",
+            data: comps.message.value,
+          };
+          ws.send(JSON.stringify(msg));
+          comps.message.value = "";
+          if (comps.isDone) {
+            comps.dialog.innerHTML = "";
+            comps.isDone = false;
+          }
+        }
+      };
+
+      ws.onopen = () => {
+        console.log("connected");
+      };
+
+      ws.onmessage = (e) => {
+        let msg = JSON.parse(e.data);
+        if (msg.type === "ping") {
+          ws.send(JSON.stringify({ type: "pong" }));
+          return;
+        }
+
+        if (msg.type === "error") {
+          let msgComp = document.createElement("div");
+          msgComp.innerText = msg.data;
+          comps.dialog.appendChild(msgComp);
+          comps.isDone = true;
+        }
+
+        if (msg.type === "info") {
+          let msgComp = document.createElement("div");
+          msgComp.innerText = msg.data;
+          comps.dialog.appendChild(msgComp);
+        }
+
+        if (msg.type === "message") {
+          let msgComp = document.createElement("div");
+          let s = "Всего найдено: " + msg.data.total_count;
+          msg.data.items.forEach((element) => {
+            s +=
+              '<div class="repo"><a class="repo-title" href="' +
+              element.html_url +
+              '">' +
+              element.name +
+              "</a>" +
+              '<p class="repo-description">' +
+              element.description +
+              '</p><p class="repo-date">' +
+              element.created_at +
+              "</p></div>";
+          });
+          msgComp.innerHTML += s;
+          comps.dialog.appendChild(msgComp);
+          comps.isDone = true;
+        }
+      };
+    </script>
+  </body>
+</html>
