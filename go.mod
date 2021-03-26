@@ -1,4 +1,4 @@
-module GoChallenge
+module github_seeker
 
 go 1.15
 

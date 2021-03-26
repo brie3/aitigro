@@ -23,7 +23,7 @@ func crawl(in <-chan string, cancel <-chan struct{}) <-chan *RepoResult {
 
 			if resp.StatusCode != http.StatusOK {
 				resp.Body.Close()
-				out <- &RepoResult{Error: fmt.Errorf(badStatusCode, resp.StatusCode, i)}
+				out <- &RepoResult{Error: fmt.Errorf(badStatusCodeFormat, resp.StatusCode, i)}
 				return
 			}
 

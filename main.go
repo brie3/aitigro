@@ -1,7 +1,7 @@
 package main
 
 import (
-	"GoChallenge/app"
+	"github_seeker/app"
 	"log"
 )
 

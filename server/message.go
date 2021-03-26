@@ -30,7 +30,7 @@ const (
 	userReadErrFormat     = "can't read message from user: %v"
 	upgradeErrFormat      = "can't upgrade connection: %v"
 	decodeErrFormat       = "can't decode: %v"
-	badStatusCode         = "err bad status code: %d for query: %s"
+	badStatusCodeFormat         = "err bad status code: %d for query: %s"
 	badMessageFormat      = "bad query"
 )
 

@@ -1,6 +1,6 @@
 package app
 
-import "GoChallenge/server"
+import "github_seeker/server"
 
 // App represent app with http and cmd handles for github go lib search queries.
 type App struct {
