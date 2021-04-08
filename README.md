@@ -1,4 +1,9 @@
-[english](README.en.md)
+[![Go Report Card](https://goreportcard.com/badge/github.com/brie3/aitigro)](https://goreportcard.com/report/github.com/brie3/aitigro)
+<p>
+
+[english_version](README.en.md)
+
+</p>
 
 ## Тестовое задание компании Айтигро на позицию golang-разработчик
 
