@@ -29,8 +29,10 @@ const (
 	readMessageErrFormat  = "can't read message from socket: %v"
 	userReadErrFormat     = "can't read message from user: %v"
 	upgradeErrFormat      = "can't upgrade connection: %v"
+	requestQueryErrFormat = "request error: %v"
+	responseErrFormat     = "search query failed: %s"
+	badStatusCodeFormat   = "bad status code: %d for %q query"
 	decodeErrFormat       = "can't decode: %v"
-	badStatusCodeFormat         = "err bad status code: %d for query: %s"
 	badMessageFormat      = "bad query"
 )
 

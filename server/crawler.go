@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 func crawl(in <-chan string, cancel <-chan struct{}) <-chan *RepoResult {
@@ -15,7 +14,6 @@ func crawl(in <-chan string, cancel <-chan struct{}) <-chan *RepoResult {
 		client := http.Client{Timeout: delay}
 		for i := range in {
 			resp, err := client.Get(searchQuery + url.QueryEscape(filter+i))
-			time.Sleep(delay)
 			if err != nil {
 				out <- &RepoResult{Error: err}
 				return

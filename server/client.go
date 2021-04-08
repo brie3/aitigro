@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 )
 
 // Client represent service cmd client.
@@ -18,11 +19,11 @@ func (c Client) RunQuery() {
 	cancel := make(chan struct{})
 
 	defer func() {
-		close(cancel)
 		close(in)
+		close(cancel)
 	}()
 
-	go writeStdout(crawl(in, cancel))
+	go writeStdout(in, cancel)
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -44,11 +45,23 @@ func (c Client) RunQuery() {
 			}
 		}
 	}
-
 }
 
-func writeStdout(from <-chan *RepoResult) {
-	for res := range from {
+func writeStdout(in <-chan string, cancel <-chan struct{}) {
+	out := make(chan string)
+	defer close(out)
+
+	var res *RepoResult
+	resChan := crawl(out, cancel)
+	for s := range in {
+		out <- s
+		time.Sleep(delay)
+
+		res = <-resChan
+		if res == nil {
+			continue
+		}
+
 		switch res.Error {
 		case nil:
 			pretty, err := json.MarshalIndent(res, "", "	")
