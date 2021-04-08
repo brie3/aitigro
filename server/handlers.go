@@ -53,6 +53,7 @@ func writeWs(ws *websocket.Conn, in <-chan *Message, cancel <-chan struct{}) {
 	out := make(chan string)
 	defer close(out)
 
+	var res *RepoResult
 	resChan := crawl(out, cancel)
 	for i := range in {
 		s, ok := i.Data.(string)
@@ -64,7 +65,15 @@ func writeWs(ws *websocket.Conn, in <-chan *Message, cancel <-chan struct{}) {
 		}
 		out <- s
 		time.Sleep(delay)
-		res := <-resChan
+
+		res = <-resChan
+		if res == nil {
+			if err := ws.WriteJSON(errorMessage); err != nil {
+				log.Printf(writeMessageErrFormat, err)
+			}
+			continue
+		}
+
 		switch res.Error {
 		case nil:
 			if err := ws.WriteJSON(Message{Type: MTMessage, Data: res}); err != nil {

@@ -1,4 +1,4 @@
-// Package app implements github golang repo search server.
+// Package app implements github golang repo search app.
 package app
 
 import "github_seeker/server"
