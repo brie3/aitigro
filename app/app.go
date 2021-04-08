@@ -1,19 +1,23 @@
+// Package app implements github golang repo search server.
 package app
 
-import "GoChallenge/server"
+import "github_seeker/server"
 
+// App represent app with http and cmd handles for github go lib search queries.
 type App struct {
 	done   <-chan bool
 	server server.Server
 	client server.Client
 }
 
+// NewApp returns app.
 func NewApp() *App {
 	return &App{
 		done: make(chan bool),
 	}
 }
 
+// Start starts app.
 func (a *App) Start() <-chan bool {
 	a.server.Start()
 	a.client.RunQuery()

@@ -1,3 +1,6 @@
+port ?= 8080
+title ?= github_seeker
+
 h help:
 	@echo "h help - Instructions"
 	@echo "build port=<number> title=<name> - builds package with specified port and name"

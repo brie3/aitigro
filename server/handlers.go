@@ -14,13 +14,16 @@ func (s *Server) socketHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf(upgradeErrFormat, err)
 		return
 	}
-	defer ws.Close()
-
 	out := make(chan *Message)
-	defer close(out)
+	cancel := make(chan struct{})
+	defer func() {
+		ws.Close()
+		close(out)
+		close(cancel)
+	}()
 
 	go ticker(ws)
-	go writeWs(ws, out)
+	go writeWs(ws, out, cancel)
 
 	for {
 		var read Message
@@ -46,26 +49,32 @@ func (s *Server) socketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writeWs(ws *websocket.Conn, in <-chan *Message) {
-	cancel := make(chan struct{})
-	defer close(cancel)
+func writeWs(ws *websocket.Conn, in <-chan *Message, cancel <-chan struct{}) {
+	out := make(chan string)
+	defer close(out)
 
-	var err error
+	resChan := crawl(out, cancel)
 	for i := range in {
 		s, ok := i.Data.(string)
 		if !ok {
+			if err := ws.WriteJSON(&badMessage); err != nil {
+				log.Printf(writeMessageErrFormat, err)
+			}
 			continue
 		}
-		out := crawl(s, cancel)
+		out <- s
 		time.Sleep(delay)
-		for j := range out {
-			if j.Error == nil {
-				if err = ws.WriteJSON(Message{Type: MTMessage, Data: j}); err != nil {
-					log.Printf(osStdoutErrFormat, err)
-					return
-				}
-			} else if err = ws.WriteJSON(errorMessage); err != nil {
-				log.Printf(osStdoutErrFormat, err)
+		res := <-resChan
+		switch res.Error {
+		case nil:
+			if err := ws.WriteJSON(Message{Type: MTMessage, Data: res}); err != nil {
+				log.Printf(writeMessageErrFormat, err)
+				return
+			}
+		default:
+			log.Println(res.Error.Error())
+			if err := ws.WriteJSON(errorMessage); err != nil {
+				log.Printf(writeMessageErrFormat, err)
 				return
 			}
 		}

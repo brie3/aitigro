@@ -1,3 +1,4 @@
+// Package server implements github golang repo search server.
 package server
 
 import (
@@ -8,12 +9,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Server handles http interactions.
 type Server struct {
 	router   *chi.Mux
 	upgrader *websocket.Upgrader
 	done     chan bool
 }
 
+// Start starts server.
 func (s *Server) Start() {
 	s.router = chi.NewRouter()
 	s.upgrader = &websocket.Upgrader{
