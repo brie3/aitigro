@@ -12,7 +12,7 @@ import (
 type Server struct {
 	router   *chi.Mux
 	upgrader *websocket.Upgrader
-	done     chan bool
+	// done     chan bool
 }
 
 // Start starts server.
@@ -24,8 +24,10 @@ func (s *Server) Start() {
 	}
 	s.setupHandlers()
 
+	port := ":__PORT__"
+
 	go func() {
-		if err := http.ListenAndServe(":__PORT__", s.router); err != nil {
+		if err := http.ListenAndServe(port, s.router); err != nil {
 			log.Println("Failed to start server: ", err)
 		}
 	}()
