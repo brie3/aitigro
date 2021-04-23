@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github_seeker/app"
+	"github/aitigro/app"
 	"log"
 )
 

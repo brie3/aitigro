@@ -19,8 +19,8 @@ func (c Client) RunQuery() {
 	cancel := make(chan struct{})
 
 	defer func() {
-		close(in)
 		close(cancel)
+		close(in)
 	}()
 
 	go writeStdout(in, cancel)

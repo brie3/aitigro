@@ -1,5 +1,5 @@
 port ?= 8080
-title ?= github_seeker
+title ?= golangseeker
 
 h help:
 	@echo "h help - Instructions"

@@ -3,7 +3,7 @@
 ### How to use
 
 ```
-make build - to create an app called github_seeker on port 8080
+make build - to create an app called golangseeker on port 8080
 make run - to run an application on port 8080
 make build port=<number> title=<name> - so it is possible to override these 2 items
 make run port=<number> - and here change the port number

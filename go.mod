@@ -1,4 +1,4 @@
-module github_seeker
+module github/aitigro
 
 go 1.16
 

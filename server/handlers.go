@@ -17,9 +17,9 @@ func (s *Server) socketHandler(w http.ResponseWriter, r *http.Request) {
 	out := make(chan *Message)
 	cancel := make(chan struct{})
 	defer func() {
-		ws.Close()
-		close(out)
 		close(cancel)
+		close(out)
+		ws.Close()
 	}()
 
 	go ticker(ws)

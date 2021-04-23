@@ -1,7 +1,7 @@
 // Package app implements github golang repo search app.
 package app
 
-import "github_seeker/server"
+import "github/aitigro/server"
 
 // App represent app with http and cmd handles for github go lib search queries.
 type App struct {
